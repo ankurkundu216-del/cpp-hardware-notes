@@ -1,13 +1,13 @@
 # C++ Hardware Interaction & Low-Level Notes
 
-Detailed notes and x86-64 assembly analyses demonstrating how C++ maps directly to CPU execution, physical memory management, and compiler optimizations.
+Detailed notes, assembly analyses, and cache benchmarks demonstrating how C++ maps directly to CPU architecture, physical memory management, and compiler optimizations.
 
 ---
 
 ## 1. Memory Addresses & Raw Pointers (`main.cpp`)
 
-* **Virtual RAM Addresses (`0x7ffe...`)**: Pointer addresses map directly to virtual RAM locations managed by the CPU Memory Management Unit (MMU).
-* **Data Allocation Sizes**: Standard integers (`int`) occupy 4 bytes (32-bit), whereas 64-bit architecture pointers require 8 bytes to address the entire system memory space.
+* **Virtual RAM Addresses (`0x7ffe...`)**: Pointer addresses map directly to virtual memory locations managed by the CPU Memory Management Unit (MMU).
+* **Data Allocation Sizes**: Standard integers (`int`) occupy 4 bytes (32-bit), whereas 64-bit architecture pointers require 8 bytes to address the system memory space.
 * **Unoptimized Assembly Analysis (`-O0`)**:
   * `sub rsp, 32`: Expands the local call stack frame down by 32 bytes to reserve memory.
   * `mov DWORD PTR [rbp-20], 42`: Writes the value `42` directly to a specific 4-byte stack offset in RAM.
@@ -17,19 +17,27 @@ Detailed notes and x86-64 assembly analyses demonstrating how C++ maps directly 
 
 ## 2. Zero-Cost Abstractions & Optimizations (`02_zero_cost.cpp`)
 
-* **Function Inlining**: High-level C++ templates and abstractions generate zero runtime function overhead compared to raw C/Assembly.
+* **Function Inlining**: High-level C++ templates generate zero runtime function call overhead compared to manual C/Assembly code.
 * **Aggressive Compiler Optimization (`-O3`)**:
-  * **Constant Folding**: The compiler pre-evaluates `10 * 2` during compilation instead of at runtime.
-  * **Register Assignment (`mov esi, 20`)**: The compiler completely deletes unnecessary intermediate variables and hardcodes the calculated value directly into register `esi`.
-  * Eliminates pointer dereferencing and stack write/read overhead entirely.
+  * **Constant Folding**: Pre-evaluates expressions (`10 * 2`) during compilation instead of at runtime.
+  * **Register Assignment (`mov esi, 20`)**: Deletes intermediate pointer variables and hardcodes calculated values directly into CPU registers.
+  * Eliminates stack write/read operations entirely.
 
 ---
 
-## 3. Useful Assembly & Performance Commands
+## 3. Hardware Cache Locality & Memory Traversal (`03_cache.cpp`)
+
+* **Sequential vs. Strided Memory Access**:
+  * **Row-Major Access (`matrix[i][j]`)**: **~75 ms** — Reads memory sequentially. Triggers the CPU Hardware Prefetcher to load 64-byte **Cache Lines** into ultra-fast L1 Data Cache (~1 ns access), maximizing **Cache Hits**.
+  * **Column-Major Access (`matrix[j][i]`)**: **~104 ms** — Jumps 32,000 bytes per iteration. Bypasses loaded cache lines and causes severe **L1/L2 Cache Misses**, stalling the CPU while fetching data from slow system RAM (~50–100 ns access).
+
+---
+
+## 4. Useful CLI Commands
 
 ```bash
 # View human-readable Intel Assembly with main function highlighted
 g++ -O3 -S -masm=intel filename.cpp -o assembly.s && grep -A 25 "main:" assembly.s
 
-# Run Linux hardware performance counters to check CPU cache misses
-perf stat ./binary_name
+# Compile cache benchmark with Level-2 optimization
+g++ -O2 03_cache.cpp -o 03_cache && ./03_cache
