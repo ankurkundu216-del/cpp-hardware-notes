@@ -33,11 +33,35 @@ Detailed notes, assembly analyses, and cache benchmarks demonstrating how C++ ma
 
 ---
 
-## 4. Useful CLI Commands
+## 4. Branch Prediction & Pipeline Stalls (`04_branch.cpp`)
+
+* **CPU Instruction Pipeline**: Modern CPUs speculatively execute instructions down conditional branches (`if/else`) before evaluating conditions to keep the hardware pipeline saturated.
+* **Unsorted Data (Random Branches)**: Flips condition results unpredictably, causing severe **Branch Mispredictions**. The CPU must flush the pipeline and discard instructions, causing severe CPU stalls.
+* **Sorted Data (Predictable Branches)**: Allows the hardware branch predictor to reach near 100% accuracy, maintaining full execution throughput.
+
+---
+
+## 5. Heap vs. Stack Allocation Mechanics (`05_heap_vs_stack.cpp`)
+
+* **Stack Allocation**: **~145 µs** — Involves adjusting the stack pointer register (`sub rsp, N`). Operates in $O(1)$ constant time with zero kernel/allocator overhead and optimal L1 cache locality.
+* **Heap Allocation (`malloc` / `free`)**: **~4227 µs** (**~29x slower**) — Incurs significant C runtime (`glibc`) allocator overhead, searching free-list bins, acquiring thread locks, updating allocation tracking metadata headers, and increasing memory fragmentation.
+
+---
+
+## 6. Useful CLI Commands
 
 ```bash
 # View human-readable Intel Assembly with main function highlighted
 g++ -O3 -S -masm=intel filename.cpp -o assembly.s && grep -A 25 "main:" assembly.s
 
-# Compile cache benchmark with Level-2 optimization
+# Run Linux hardware performance counters to inspect cache misses and branch mispredictions
+perf stat ./04_branch
+
+# Compile and run cache locality benchmark
 g++ -O2 03_cache.cpp -o 03_cache && ./03_cache
+
+# Compile and run branch prediction benchmark
+g++ -O2 04_branch.cpp -o 04_branch && ./04_branch
+
+# Compile and run heap vs stack allocation benchmark
+g++ -O2 05_heap_vs_stack.cpp -o 05_heap_vs_stack && ./05_heap_vs_stack
