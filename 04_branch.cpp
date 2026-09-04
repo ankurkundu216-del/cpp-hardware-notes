@@ -56,12 +56,12 @@ int main() {
 
 	std::cout << "Sum Check: " << sum1 + sum2 << "\n";
 
-        std::cout << "Unsorted Data (Random Branches): "
+    std::cout << "Unsorted Data (Random Branches): "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() << " ms\n";
 
-        std::cout << "Sorted Data (Predictable Branches): "
+    std::cout << "Sorted Data (Predictable Branches): "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2).count() << " ms\n";
 
-        return 0;
+    return 0;
 }
 
